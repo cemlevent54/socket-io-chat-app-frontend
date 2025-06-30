@@ -1,0 +1,56 @@
+.chatheader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid #e1e5e9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chatheader-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.chatheader-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.chatheader-user {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.chatheader-leave {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.chatheader-leave:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Responsive tasarım */
+@media (max-width: 768px) {
+  .chatheader {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .chatheader-leave {
+    align-self: flex-end;
+  }
+} 

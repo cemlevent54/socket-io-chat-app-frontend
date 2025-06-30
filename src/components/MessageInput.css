@@ -1,0 +1,86 @@
+.messageinput-form {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid #e1e5e9;
+}
+
+.messageinput-textarea {
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid #e1e5e9;
+  border-radius: 20px;
+  font-size: 16px;
+  font-family: inherit;
+  resize: none;
+  min-height: 40px;
+  max-height: 120px;
+  transition: border-color 0.3s ease;
+  outline: none;
+}
+
+.messageinput-textarea:focus {
+  border-color: #667eea;
+}
+
+.messageinput-textarea:disabled {
+  background: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.messageinput-send {
+  background: #25d366;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  outline: none;
+}
+
+.messageinput-send:hover:not(:disabled),
+.messageinput-send:focus:not(:disabled) {
+  background: #20ba5a;
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(37,211,102,0.3);
+}
+
+.messageinput-send:disabled {
+  background: #e0e0e0;
+  color: #aaa;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.messageinput-send svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Responsive tasarım */
+@media (max-width: 768px) {
+  .messageinput-form {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .messageinput-textarea {
+    width: 100%;
+  }
+  
+  .messageinput-send {
+    align-self: flex-end;
+  }
+} 

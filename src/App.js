@@ -93,7 +93,9 @@ function App() {
         isOwn: false,
         status: 'sent',
         senderName: data.message.sender_name,
-        isRead: false
+        isRead: false,
+        chat_id: data.message.chat_id || data.message.room_id || data.message.id,
+        created_at: data.message.created_at // varsa ekle
       };
       
       setMessages(prev => [...prev, newMessage]);
@@ -117,6 +119,9 @@ function App() {
         }
         return chat;
       }));
+
+      // CHAT LİSTESİNİ ANINDA GÜNCELLE
+      loadUserChats();
     });
 
     // Mesaj gönderme başarılı event'i
@@ -309,6 +314,12 @@ function App() {
       return;
     }
 
+    // En yeni created_at değerini bul
+    const lastCreatedAt = messages.length
+      ? Math.max(...messages.map(m => new Date(m.created_at || 0).getTime()))
+      : Date.now();
+    const optimisticCreatedAt = new Date(lastCreatedAt + 1).toISOString();
+
     // Mesajı önce local state'e ekle (optimistic update)
     const tempMessage = {
       id: Date.now(),
@@ -319,10 +330,12 @@ function App() {
         hour: '2-digit', 
         minute: '2-digit' 
       }),
+      created_at: optimisticCreatedAt,
       isOwn: true,
       status: 'sending',
       senderName: userInfo?.email || 'Sen',
-      isRead: false
+      isRead: false,
+      chat_id: roomId
     };
     
     // Mesajı hemen ekle ve input'u temizle
@@ -656,8 +669,31 @@ function App() {
 
   // Mesajları backend'den gelen yapıya göre işleyerek ChatRoom'a aktar
   const processedMessages = (() => {
+    // Aktif chat ile ilgili mesajları filtrele
+    const filterByRoom = (msg) => {
+      // chat_id, room_id veya id ile eşleşme
+      if (msg.chat_id && msg.chat_id === roomId) return true;
+      if (msg.room_id && msg.room_id === roomId) return true;
+      if (msg.id && msg.id === roomId) return true;
+      // sender/receiver kombinasyonu (aktif chat)
+      const activeChat = userChats.find(chat => chat.id === roomId);
+      if (activeChat && userInfo) {
+        const otherId = activeChat.sender_id === userInfo.userId ? activeChat.receiver_id : activeChat.sender_id;
+        // Mesajda sender ve receiver varsa kontrol et
+        if (
+          (msg.sender_id === userInfo.userId && msg.receiver_id === otherId) ||
+          (msg.sender_id === otherId && msg.receiver_id === userInfo.userId) ||
+          (msg.senderId === userInfo.userId && msg.receiverId === otherId) ||
+          (msg.senderId === otherId && msg.receiverId === userInfo.userId)
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     // Socket mesajları ve API mesajlarını ayrı ayrı işle
-    const socketMessages = messages.map(msg => ({
+    const socketMessages = messages.filter(filterByRoom).map(msg => ({
       id: msg.id,
       content: msg.content,
       senderId: msg.sender_id || msg.senderId,
@@ -668,26 +704,14 @@ function App() {
       type: msg.type,
       status: msg.status || 'sent',
       isRead: msg.is_read || msg.isRead || false,
-      source: 'socket'
+      source: 'socket',
+      chat_id: msg.chat_id || msg.room_id || msg.id,
+      created_at: msg.created_at
     }));
 
-    const apiMessagesProcessed = apiMessages.map(msg => {
-      // Debug: Mesaj yapısını logla
-      console.log('🔍 API mesajı işleniyor:', {
-        id: msg.id,
-        content: msg.content,
-        created_at: msg.created_at,
-        timestamp: msg.timestamp,
-        createdAt: msg.createdAt,
-        formatted_created_at: msg.formatted_created_at,
-        sender_id: msg.sender_id,
-        senderId: msg.senderId
-      });
-
-      // Tarih alanını normalize et
+    const apiMessagesProcessed = apiMessages.filter(filterByRoom).map(msg => {
       let normalizedDate;
       let originalTimestamp;
-      
       if (msg.formatted_created_at) {
         normalizedDate = msg.formatted_created_at;
         originalTimestamp = msg.created_at || msg.timestamp;
@@ -726,7 +750,6 @@ function App() {
         });
         originalTimestamp = now.toISOString();
       }
-
       return {
         id: msg.id,
         content: msg.content,
@@ -738,44 +761,22 @@ function App() {
         type: msg.type,
         status: msg.status || 'sent',
         isRead: msg.is_read || msg.isRead || false,
-        source: 'api'
+        source: 'api',
+        chat_id: msg.chat_id || msg.room_id || msg.id,
+        created_at: msg.created_at
       };
     });
 
-    // Tüm mesajları birleştir
+    // Tüm mesajları birleştir ve sıralı döndür
     const allMessages = [...socketMessages, ...apiMessagesProcessed];
-    
-    console.log('📊 Birleştirilmiş mesajlar:', allMessages.map(msg => ({
-      id: msg.id,
-      content: msg.content.substring(0, 20),
-      originalTimestamp: msg.originalTimestamp,
-      source: msg.source
-    })));
-
-    // Sırala
     return allMessages.sort((a, b) => {
-      // Debug: Sıralama öncesi
-      console.log('🔄 Sıralama karşılaştırması:', {
-        a: { id: a.id, originalTimestamp: a.originalTimestamp, content: a.content.substring(0, 20), source: a.source },
-        b: { id: b.id, originalTimestamp: b.originalTimestamp, content: b.content.substring(0, 20), source: b.source }
-      });
-
-      // Önce orijinal timestamp'leri karşılaştır
-      if (a.originalTimestamp && b.originalTimestamp) {
-        const dateA = new Date(a.originalTimestamp);
-        const dateB = new Date(b.originalTimestamp);
-        
-        if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-          const result = dateA.getTime() - dateB.getTime();
-          console.log('📅 Timestamp sıralama sonucu:', result);
-          return result;
-        }
-      }
-      
-      // Eğer timestamp yoksa veya geçersizse, ID'ye göre sırala
-      const idResult = (a.id || 0) - (b.id || 0);
-      console.log('🆔 ID sıralama sonucu:', idResult);
-      return idResult;
+      // Eğer a veya b sending ise, sending olanı en alta koy
+      if (a.status === 'sending' && b.status !== 'sending') return 1;
+      if (b.status === 'sending' && a.status !== 'sending') return -1;
+      // Diğerleri created_at'a göre sırala
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return dateA - dateB;
     });
   })();
 
@@ -826,11 +827,11 @@ function App() {
     }
   };
 
-  // Debug logları
-  console.log('userInfo:', userInfo);
-  console.log('messages:', messages);
-  console.log('apiMessages:', apiMessages);
-  console.log('processedMessages:', processedMessages);
+  // Debug logları (geliştirme sırasında kullanılabilir)
+  // console.log('userInfo:', userInfo);
+  // console.log('messages:', messages);
+  // console.log('apiMessages:', apiMessages);
+  // console.log('processedMessages:', processedMessages);
 
   if (!user) {
     return (

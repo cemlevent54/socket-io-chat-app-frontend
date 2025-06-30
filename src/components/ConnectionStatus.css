@@ -1,0 +1,57 @@
+.connectionstatus {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.connectionstatus-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.connectionstatus-indicator {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.connectionstatus-indicator.connected {
+  color: #4caf50;
+  animation: pulse 2s infinite;
+}
+
+.connectionstatus-indicator.disconnected {
+  color: #f44336;
+}
+
+.connectionstatus-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.connectionstatus-error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  border: 1px solid #ffcdd2;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+} 
