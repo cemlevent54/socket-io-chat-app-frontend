@@ -53,7 +53,7 @@ function MessageList({ messages = [], typingUsers = [] }) {
                   <span className="messagelist-message-time">
                     {msg.createdAt}
                     {msg.isOwn && (
-                      <span className="messagelist-message-status">
+                      <span className={`messagelist-message-status${(msg.status === 'read' || msg.isRead) ? ' read' : ''}`}>
                         {msg.status === 'sending' ? '⏳' : 
                          msg.status === 'read' || msg.isRead ? '✓✓' : 
                          msg.status === 'sent' ? '✓' : ''}

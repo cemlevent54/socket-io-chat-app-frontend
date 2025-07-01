@@ -541,7 +541,9 @@ function App() {
       socket.emit('typing_in_chat', {
         receiverId,
         isTyping,
-        chatSocketId
+        chatSocketId,
+        userId: userInfo.userId,
+        userRole: userInfo.userRole
       });
     }
   };
@@ -783,8 +785,17 @@ function App() {
   // Kullanıcı listesini çek
   const loadAllUsers = async () => {
     try {
-      const result = await userApi.getAllUsers();
-      setAllUsers(result.data || []);
+      const role = userInfo?.role || userInfo?.userRole || 'user';
+      const result = await userApi.getAllUsers(role);
+      // Sadece id veya userId olanları ve UUID formatında olanları al
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const normalized = (result.data || [])
+        .map(u => ({
+          ...u,
+          id: u.id || u.userId
+        }))
+        .filter(u => u.id && uuidRegex.test(u.id)); // Sadece UUID olanlar
+      setAllUsers(normalized);
     } catch (err) {
       setError('Kullanıcılar yüklenemedi');
     }
@@ -793,6 +804,12 @@ function App() {
   // Yeni sohbet başlat
   const handleStartNewChat = async () => {
     if (!selectedUserId) return;
+    console.log('Yeni chat için seçilen kullanıcı ID:', selectedUserId, typeof selectedUserId);
+    // UUID validasyonu
+    if (!isValidUUID(selectedUserId)) {
+      setError('Seçilen kullanıcı ID geçersiz. UUID formatında olmalı.');
+      return;
+    }
     // Önce mevcut chat var mı kontrol et
     const existingChat = userChats.find(chat =>
       (chat.sender_id === userInfo.userId && chat.receiver_id === selectedUserId) ||
@@ -826,6 +843,13 @@ function App() {
       setApiLoading(false);
     }
   };
+
+  // bearerToken veya user değiştiğinde userApi'ye token'ı set et
+  useEffect(() => {
+    if (bearerToken) {
+      userApi.setToken(bearerToken);
+    }
+  }, [bearerToken, user]);
 
   // Debug logları (geliştirme sırasında kullanılabilir)
   // console.log('userInfo:', userInfo);
@@ -887,6 +911,7 @@ function App() {
       setSelectedUserId={setSelectedUserId}
       handleStartNewChat={handleStartNewChat}
       handleTyping={handleTyping}
+      socketLoading={socketLoading}
     />
   );
 }

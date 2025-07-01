@@ -42,6 +42,25 @@
   transform: translateY(-1px);
 }
 
+.chatheader-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chatheader-refresh {
+  background: #e0e0e0;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.chatheader-refresh:hover {
+  background: #bdbdbd;
+}
+
 /* Responsive tasarım */
 @media (max-width: 768px) {
   .chatheader {

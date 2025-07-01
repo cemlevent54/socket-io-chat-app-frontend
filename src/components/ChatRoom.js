@@ -30,11 +30,18 @@ function ChatRoom({
   handleStartNewChat,
   handleTyping,
   socketLoading,
-  isConnected
+  isConnected,
+  loadChatMessages
 }) {
   // Aktif chat objesini bul
   const activeChat = userChats.find(chat => chat.id === roomId);
   const chatTitle = activeChat?.otherUserName || 'Sohbet Seç';
+
+  const handleRefresh = () => {
+    if (typeof loadChatMessages === 'function') {
+      loadChatMessages();
+    }
+  };
 
   return (
     <div className="chatroom-layout">
@@ -61,6 +68,7 @@ function ChatRoom({
           chatTitle={chatTitle}
           userInfo={userInfo}
           leaveRoom={leaveRoom}
+          onRefresh={handleRefresh}
         />
 
         <div className="chatroom-content">

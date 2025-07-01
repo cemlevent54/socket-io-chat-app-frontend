@@ -74,6 +74,11 @@
   margin-left: 0.25rem;
 }
 
+.messagelist-message-status.read {
+  color: #2196f3;
+  font-weight: bold;
+}
+
 .messagelist-message-content {
   padding: 0.75rem 1rem;
   border-radius: 15px;

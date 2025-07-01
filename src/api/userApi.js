@@ -49,9 +49,18 @@ class UserApi {
   }
 
   // Tüm kullanıcıları getir (userController'a uygun şekilde)
-  async getAllUsers() {
-    // Eğer backend'de /api/users endpointi varsa onu kullan
-    return this.makeRequest('/users');
+  async getAllUsers(role = 'user') {
+    if (role === 'admin') {
+      // Admin ise iki endpointten veri çekip birleştir
+      const [usersRes, providersRes] = await Promise.all([
+        this.makeRequest('/admin/user/all'),
+        this.makeRequest('/admin/provider/all')
+      ]);
+      // Sonuçları birleştirip tek bir array olarak döndür
+      return { data: [...(usersRes.data || []), ...(providersRes.data || [])] };
+    } else {
+      return this.makeRequest('/providers');
+    }
   }
 }
 
